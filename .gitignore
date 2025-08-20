@@ -1,0 +1,85 @@
+# Python bytecode and cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Common temporary and config files
+*.log
+*.pot
+*.mo
+*.swp
+*.swo
+*.bak
+
+# Test output and coverage
+htmlcov/
+.coverage
+.tox/
+.nox/
+.cache/
+.pytest_cache/
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+.pipenv/
+Pipfile.lock
+
+# IDE/editor settings and project files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.DS_Store
+Thumbs.db
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Environment and secrets
+.env
+*.env
+*.env.*
+*.secret
+*.pem
+*.key
+
+# Database and large data files
+*.db
+*.sqlite
+*.sqlite3
+*.bak
+*.dump
+
+# CSV, Excel, and export files
+*.csv
+*.xlsx
+*.xls
+
+# Selenium/WhatsApp profile
+WPSProfile/
+chromedriver.exe
+
+# PyInstaller / build artifacts
+build/
+dist/
+*.spec
+
+# Flask/Celery temp
+instance/
+.webassets-cache
+
+# Documentation outputs
+*.pdf
+
+# OS artifacts
+.DS_Store
+ehthumbs.db
+Icon?
+Desktop.ini
+
+# Output folders
+output/
+outputs/

@@ -1,0 +1,7 @@
+mysql-connector-python
+cryptography
+pandas
+openpyxl
+Flask
+python-dotenv
+selenium
