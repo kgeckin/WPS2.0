@@ -83,3 +83,6 @@ Desktop.ini
 # Output folders
 output/
 outputs/
+
+# Keep sanitized configuration template
+!.env.example

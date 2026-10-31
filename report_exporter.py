@@ -2,7 +2,7 @@
 # ------------------
 # Excel export module for WPS (WhatsApp Phishing Awareness Simulator).
 # Builds a management-friendly XLSX with Raw_* sheets, KPIs, and Summaries.
-# Safe by default: masks submitted_pass unless the caller explicitly allows it.
+# Exports event and aggregate metrics without credentials or individual contact details.
 
 from __future__ import annotations
 import os
@@ -40,38 +40,44 @@ def _timestamped_filename(prefix: str = "WPS_Report", ext: str = ".xlsx") -> str
     os.makedirs(desktop, exist_ok=True)
     return os.path.join(desktop, f"{prefix}_{ts}{ext}")
 
+def _safe_cell(value: Any) -> Any:
+    """Avoid spreadsheet formula evaluation for untrusted strings."""
+    if isinstance(value, str) and value.lstrip().startswith(("=", "+", "-", "@")):
+        return "'" + value
+    return value
+
+
+def _safe_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    if frame.empty:
+        return frame.copy()
+    return frame.apply(lambda column: column.map(_safe_cell))
+
+
 def build_dataframes(include_passwords: bool = False) -> Dict[str, pd.DataFrame]:
+    """Gather only the data needed for anonymized reporting.
+
+    The old password export switch is rejected for compatibility with callers.
     """
-    Pull data from DB and return a dict of DataFrames keyed by logical name.
-    include_passwords controls whether login_attempts.submitted_pass is exported.
-    """
-    users = _as_df(fetch_all_users())
+    if include_passwords:
+        raise ValueError("Export of submitted credentials is permanently disabled.")
+
+    users = _as_df(fetch_all_users()).drop(columns=["email", "phone"], errors="ignore")
     campaigns = _as_df(fetch_all_campaigns())
     tracking = _as_df(fetch_campaign_tracking())
     attempts = _as_df(fetch_login_attempts())
-    import_logs = _as_df(fetch_import_logs())
-    error_logs = _as_df(fetch_error_logs())
-    action_logs = _as_df(fetch_action_logs())
-
-    # Mask or drop submitted_pass by default for safety
-    if not attempts.empty:
-        if include_passwords:
-            # If you still prefer masking, uncomment the next line:
-            # attempts["submitted_pass"] = attempts["submitted_pass"].astype(str).str.replace(r'.', '*', regex=True)
-            pass
-        else:
-            if "submitted_pass" in attempts.columns:
-                attempts = attempts.drop(columns=["submitted_pass"], errors="ignore")
+    safe_columns = ["attempt_id", "user_id", "campaign_id", "timestamp"]
+    attempts = attempts.reindex(columns=safe_columns)
 
     return {
-        "users": users,
-        "campaigns": campaigns,
-        "tracking": tracking,
-        "attempts": attempts,
-        "import_logs": import_logs,
-        "error_logs": error_logs,
-        "action_logs": action_logs,
+        "users": _safe_frame(users),
+        "campaigns": _safe_frame(campaigns),
+        "tracking": _safe_frame(tracking),
+        "attempts": _safe_frame(attempts),
+        "import_logs": pd.DataFrame(),
+        "error_logs": pd.DataFrame(),
+        "action_logs": pd.DataFrame(),
     }
+
 
 def compute_summaries(dfs: Dict[str, pd.DataFrame]) -> Tuple[pd.DataFrame, pd.DataFrame, Dict[str, Any]]:
     """Produce Summary_by_company, Summary_by_campaign and KPI dict."""
@@ -163,7 +169,7 @@ def export_to_excel(output_path: str | None = None, include_passwords: bool = Fa
                     "2) KPIs are computed in Python for reliability and speed.",
                     "3) Build visuals with PivotTables/Charts from Raw_* or use Summary_* sheets.",
                     "4) For time trends, use 'timestamp' in Raw_login_attempts.",
-                    "5) Do NOT distribute any sensitive columns externally.",
+                    "5) Do not share reports without authorization. Credentials and diagnostic logs are excluded.",
                 ]
             })
             readme.to_excel(writer, sheet_name="README", index=False)
@@ -174,10 +180,7 @@ def export_to_excel(output_path: str | None = None, include_passwords: bool = Fa
             dfs["tracking"].to_excel(writer, sheet_name="Raw_campaign_tracking", index=False)
             dfs["attempts"].to_excel(writer, sheet_name="Raw_login_attempts", index=False)
 
-            # Logs (view-only)
-            dfs["import_logs"].to_excel(writer, sheet_name="Raw_import_logs", index=False)
-            dfs["error_logs"].to_excel(writer, sheet_name="Raw_error_logs", index=False)
-            dfs["action_logs"].to_excel(writer, sheet_name="Raw_action_logs", index=False)
+            # Diagnostic logs may contain sensitive details and are not exported.
 
             # Summaries
             by_company.to_excel(writer, sheet_name="Summary_by_company", index=False)
