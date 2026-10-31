@@ -1,112 +1,104 @@
-# WhatsApp Phishing Awareness Simulator (WPS)
+<div align="center">
 
-## Proje Hakkında
+<img src="docs/assets/cover.svg" width="100%" alt="WPS 2.0, controlled security awareness lab" />
 
-WhatsApp Phishing Awareness Simulator, kurum çalışanlarının siber güvenlik farkındalığını artırmak için geliştirilmiş bir simülasyon ve eğitim platformudur. Kullanıcılara WhatsApp üzerinden sahte mesajlar gönderilir, etkileşimler (tıklama, giriş denemesi, eğitim) hem GUI arayüzünde hem de MySQL tabanında gerçek zamanlı olarak raporlanır.
+**A private educational prototype for approved security awareness exercises.**
 
----
+[Getting started](#getting-started) · [Architecture](docs/ARCHITECTURE.md) · [Security](docs/SECURITY.md)
 
-## Dizin Yapısı
+</div>
 
+## Overview
+
+WPS 2.0 brings together a Tkinter interface, an educational campaign database,
+a local training awareness website and the original browser integration code.
+This repository is a historical security internship project that is being
+refactored for clarity and safer demonstrations.
+
+The local awareness page shows educational content directly. It does not
+request or store passwords, verification codes or submitted email addresses.
+
+## What it includes
+
+* Campaign and participant management in a desktop interface.
+* Authenticated, time-limited training links.
+* A local Flask awareness website with no credential entry form.
+* Local MySQL event records and privacy-restricted Excel reports.
+* Documentation and regression checks for the key security boundaries.
+
+## Getting started
+
+**Prerequisites:** Python 3.11, a local MySQL development instance and,
+for the original desktop/browser features, Windows and Google Chrome.
+
+```powershell
+git clone https://github.com/kgeckin/WPS2.0.git
+cd WPS2.0
+py -3.11 -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+Copy-Item .env.example .env
+python generate_key.py
 ```
-WPS/
-├── main.py                # Ana başlatıcı: Flask server + masaüstü GUI
-├── gui.py                 # Tkinter tabanlı masaüstü arayüz
-├── sender.py              # Selenium ile WhatsApp mesajlarını gönderir
-├── encrypt_utils.py       # Link şifreleme/deşifreleme (Fernet)
-├── db_utils.py            # MySQL bağlantısı ve CRUD işlemleri
-├── phishing_server/
-│   ├── app.py             # Flask backend (redirect/login/awareness)
-│   └── templates/
-│       ├── login.html     # Sahte giriş formu
-│       └── awareness.html # Farkındalık/awareness sayfası
-├── .env                   # Ortam değişkenleri (örnek: .env.example)
-├── requirements.txt       # Python bağımlılıkları
-├── wps_local.sql          # MySQL tablo şeması
+
+Configure the local database values in `.env` and initialize the schema
+from [wps_local.sql](wps_local.sql) in an isolated test database.
+
+```powershell
+python main.py
 ```
 
----
+The training web service is bound to `127.0.0.1:5000` by default.
+It is not a public or remotely reachable service. The original browser
+messaging functionality requires separately approved test accounts,
+test recipients and integration verification.
 
-## Contributor'lar
+## Repository structure
 
-* Proje sahibi: Kardelen Geçkin
-* Katkıda bulunanlar: Beytül Kocakaplan
+```text
+WPS2.0/
+├── docs/                 # Architecture, security notes, cover
+├── phishing_server/      # Local credential-free awareness service
+├── tests/                # Isolated privacy and route tests
+├── gui.py                # Desktop UI
+├── db_utils.py           # MySQL access and event tracking
+├── encrypt_utils.py      # Time-limited encrypted links
+├── sender.py             # Legacy browser integration
+├── report_exporter.py    # Minimal-data Excel reports
+├── main.py               # Local application entrypoint
+├── .env.example          # Example, no real credentials
+└── requirements.txt
+```
 
----
+## Validation
 
-## Kurulum ve Çalıştırma
+```powershell
+python -m pip install -r requirements-dev.txt
+python -m pytest -q tests
+```
 
-1. **Depoyu klonla:**
+The new tests use mock event loggers and database connections. A complete
+Windows, Chrome and MySQL integration test has not yet been confirmed.
 
-   ```bash
-   git clone <repo-link>
-   cd WPS
-   ```
+## Architecture & decisions
 
-2. **Python paketlerini yükle:**
+See [Architecture](docs/ARCHITECTURE.md) for the training flow, service
+boundaries and known integration gaps.
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+## Security & limitations
 
-3. **.env dosyasını oluştur ve yapılandır:**
+* Authorized training with informed participants only.
+* No credential capture UI, and no credential collection in the retained API.
+* Links expire and the local web server does not listen on external interfaces.
+* Report export excludes passwords, submitted addresses and diagnostic logs.
+* Historical database rows from older versions are **not** automatically deleted.
+* Third-party content and the tracked browser driver require a rights and
+  binary hygiene review before redistribution.
 
-   Örnek:
+Read [Security & privacy](docs/SECURITY.md) before any demonstration.
+This is an educational prototype, not a verified production deployment.
 
-   ```env
-   SECRET_KEY=xxx  # Fernet anahtarı
-   ADMIN_PASS=xxx  # Yönetici şifresi
-   DB_HOST=localhost
-   DB_USER=your_db_user
-   DB_PASSWORD=your_db_password
-   DB_NAME=wps_local
-   ```
+## License
 
-   > DB ayarlarını ve backend IP/hostname/portunu kendi ortamına göre düzenle.
-
-4. **MySQL kurulumu**
-
-   * Proje MySQL veritabanı gerektirir. Kendi bilgisayarında veya ağdaki bir sunucuda MySQL Community Server kurulu olmalıdır.
-   * Yalnızca awareness simülasyonu için değil, tüm loglama, raporlama ve kullanıcı yönetimi için MySQL kurulumu şarttır.
-   * MySQL yoksa uygulama çalışmaz.
-
-5. **MySQL’de tablo şemasını yükle:**
-
-   ```sql
-   -- MySQL Workbench veya terminalde:
-   source wps_local.sql
-   ```
-
-6. **Projeyi başlat:**
-
-   ```bash
-   python main.py
-   ```
-
-   * Hem Flask backend hem de masaüstü GUI açılır.
-
----
-
-## Kısa Açıklama
-
-* WhatsApp mesajları Selenium ile otomatik gönderilir.
-* Linkler, kullanıcıya özel şifreli token ile gelir.
-* Kullanıcılar tıkladığında, şirket ağı içindeki Flask backend’e yönlenir.
-* Login denemeleri ve awareness sayfası, hem GUI arayüzünde hem de MySQL tabanında raporlanır.
-
----
-
-## Güvenlik ve Gizlilik
-
-* Proje yalnızca eğitim ve farkındalık amaçlıdır.
-* Gerçek kullanıcı şifresi toplanmaz, tüm girişler simülasyon amaçlıdır.
-* Veriler şirket içi veritabanında tutulur.
-
----
-
-## Destek ve İletişim
-
-Sorularınız için:
-
-* Proje Sahibi: Kardelen Geçkin
-* E-posta: kardelengeckin@gmail.com
+No license file is currently present. Do not assume redistribution rights
+for this code, embedded assets or third-party materials.
