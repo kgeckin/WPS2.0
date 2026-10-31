@@ -29,8 +29,8 @@ def get_connection():
             charset="utf8mb4"
         )
         return conn
-    except Error as e:
-        log_error("DB Connection Error", str(e), "db_utils")
+    except Error:
+        # Avoid recursive logging: log_error itself opens a DB connection.
         return None
 
 # --- Error Logging ---
@@ -405,25 +405,20 @@ def fetch_action_logs():
     finally:
         conn.close()
 
-def log_login_attempt(user_id, campaign_id, submitted_email, submitted_pass, user_agent, ip_address):
-    """
-    Logs a login attempt on the phishing landing page.
-    """
+def log_login_attempt(user_id, campaign_id, *_ignored_legacy_fields):
+    """Record exercise metadata only. Legacy credential arguments are discarded."""
     conn = get_connection()
     if not conn:
         return False
     try:
         cursor = conn.cursor()
-        sql = """
-            INSERT INTO login_attempts
-            (user_id, campaign_id, submitted_email, submitted_pass, user_agent, ip_address)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """
-        cursor.execute(sql, (user_id, campaign_id, submitted_email, submitted_pass, user_agent, ip_address))
+        cursor.execute(
+            "INSERT INTO login_attempts (user_id, campaign_id) VALUES (%s, %s)",
+            (int(user_id), int(campaign_id)),
+        )
         conn.commit()
         return True
-    except Error as e:
-        log_error("Log Login Attempt Error", str(e), "db_utils")
+    except Error:
         return False
     finally:
         conn.close()
@@ -437,7 +432,7 @@ def fetch_login_attempts():
         return []
     try:
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM login_attempts ORDER BY timestamp DESC")
+        cursor.execute("SELECT attempt_id, user_id, campaign_id, timestamp FROM login_attempts ORDER BY timestamp DESC")
         return cursor.fetchall()
     except Error as e:
         log_error("Fetch Login Attempts Error", str(e), "db_utils")
