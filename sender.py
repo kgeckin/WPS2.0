@@ -441,5 +441,5 @@ def run_whatsapp_campaign(
 
 
 if __name__ == "__main__":
-    # Example: send campaign with ID 1 to ALL ACTIVE users, keep browser open
-    run_whatsapp_campaign(1, None, keep_open=True)
+    print("Start the desktop application to review a campaign's authorized recipient scope.")
+    print("Direct execution does not dispatch any messages.")
