@@ -5,7 +5,7 @@ WPS Awareness Lab consolidates two historically separate educational prototypes 
 ```text
                 One trusted local computer
    ┌─────────────────────────────────────────────────┐
-   │  CLI        Tkinter read-only      Web dashboard │
+   │  CLI        Tkinter local-management      Web dashboard │
    │   │                │                     │       │
    │   └────────────────┴─────────────────────┘       │
    │                    │                            │
@@ -23,7 +23,7 @@ WPS Awareness Lab consolidates two historically separate educational prototypes 
 
 | Concept | Previously in WPS | Previously in WPS2.0 | Unified approach |
 | --- | --- | --- | --- |
-| Campaign and participant management | Modular Tkinter views | Large monolithic GUI | SQLite-backed read-only Tkinter overview and web console |
+| Campaign and participant management | Modular Tkinter views | Large monolithic GUI | SQLite-backed Tkinter management, CLI operations and a read-only web console |
 | Awareness page | Local form with session-bound nonce | Immediate awareness content | Explicit educational page with single-use acknowledgement and CSRF |
 | Link authenticity | Fernet token module | Fernet utility module | Short-lived signed token with no personal data |
 | Reporting | DataFrame export sanitizer | Summary Excel exporter | Restricted CSV of pseudonymous acknowledgements |
