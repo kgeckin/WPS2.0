@@ -37,6 +37,7 @@ from selenium.common.exceptions import SessionNotCreatedException
 
 from db_utils import fetch_all_users, fetch_all_campaigns, log_action
 from encrypt_utils import generate_encrypted_token
+from campaign_approval import approved_batch, record_audit
 
 # ============================================================================
 # Environment & globals
@@ -258,7 +259,7 @@ def send_message(driver, phone: str, message: str, per_step_timeout: int = 20) -
     """Open chat, type message as a single bubble, and send once (no delivery verification)."""
     msisdn = phone_digits_for_wa(phone)
     if not msisdn:
-        logger.error(f"Invalid phone number after normalization: {phone!r}")
+        logger.error("Invalid recipient phone after normalization.")
         return False
 
     url = f"https://web.whatsapp.com/send/?phone={msisdn}&app_absent=0"
@@ -280,12 +281,12 @@ def send_message(driver, phone: str, message: str, per_step_timeout: int = 20) -
     try:
         WebDriverWait(driver, per_step_timeout).until(lambda d: _chat_page_ready(d))
     except Exception:
-        logger.error(f"Chat did not open for {msisdn} within timeout.")
+        logger.error("Chat did not open within timeout.")
         return False
 
     compose = _wait_for_compose(driver, timeout=12)
     if not compose:
-        logger.error(f"Compose box not found for {msisdn}.")
+        logger.error("Message compose box not found.")
         return False
 
     # Focus, clear, type fresh
@@ -311,7 +312,7 @@ def send_message(driver, phone: str, message: str, per_step_timeout: int = 20) -
         compose.send_keys(Keys.ENTER)
 
     time.sleep(0.8)
-    logger.info(f"Dispatched to {msisdn}.")
+    logger.info("Message dispatched to one approved recipient.")
     return True
 
 # ============================================================================
@@ -353,6 +354,7 @@ def run_whatsapp_campaign(
     target_user_ids: Optional[Iterable[int]] = None,
     country_code: str = "90",
     keep_open: bool = False,
+    dry_run: bool = True,
 ) -> None:
     """Send the selected campaign via WhatsApp Web.
 
@@ -361,6 +363,7 @@ def run_whatsapp_campaign(
         target_user_ids: If provided, only these user IDs (and Active) are targeted.
         country_code: Default country code used to normalize local numbers (e.g., "90").
         keep_open: If True, keep Chrome open after the run (manual close).
+        dry_run: True by default. GUI enables delivery only after explicit approval.
     """
     # Load active users
     try:
@@ -369,13 +372,13 @@ def run_whatsapp_campaign(
         # If db_utils doesn't support the argument, fallback and filter manually
         users = [u for u in (fetch_all_users() or []) if u.get("is_active", 1)]
 
-    # Restrict to explicit targets if provided
-    if target_user_ids is not None:
-        try:
-            allow = {int(x) for x in target_user_ids}
-        except Exception:
-            allow = set()
-        users = [u for u in users if int(u["user_id"]) in allow]
+    # Never silently expand selection to all active contacts.
+    approval, users = approved_batch(
+        campaign_id=campaign_id,
+        selected_user_ids=target_user_ids,
+        active_users=users,
+        country_code=country_code,
+    )
 
     # Load campaign
     campaigns = fetch_all_campaigns()
@@ -385,16 +388,16 @@ def run_whatsapp_campaign(
         return
 
     message_template = campaign["message"]
+    logger.info(
+        "Approved awareness campaign %s, scope %s, recipient count %d.",
+        campaign_id, approval.authorization_reference, len(users),
+    )
+    if dry_run:
+        record_audit("preview", campaign_id, approval, len(users))
+        logger.info("DRY RUN: no Chrome session opened and no messages delivered.")
+        return
 
-    # Log target scope
-    if target_user_ids is None:
-        logger.info(f"Starting campaign_id={campaign_id} for {len(users)} ACTIVE users")
-    else:
-        logger.info(
-            f"Starting campaign_id={campaign_id} for target IDs: {sorted({int(x) for x in target_user_ids})} "
-            f"({len(users)} users after filtering)"
-        )
-
+    record_audit("start", campaign_id, approval, len(users))
     driver = get_or_create_driver(keep_open=keep_open, profile_dir=CHROME_PROFILE_DIR)
 
     dispatched = 0
@@ -410,16 +413,17 @@ def run_whatsapp_campaign(
                 # Build user-specific message with a proper clickable link
                 message = build_message_text(message_template, user["user_id"], campaign_id)
 
-                logger.info(f"[{i}/{len(users)}] Sending to user_id={user['user_id']} phone={phone}")
+                logger.info("[%d/%d] Sending approved awareness exercise to recipient_id=%s", i, len(users), user["user_id"])
                 if send_message(driver, phone, message):
                     dispatched += 1
                     try:
                         log_action("system", "add", "send")
                     except Exception:
                         pass
-                time.sleep(1.0)  # pacing
+                time.sleep(5.0)  # conservative pacing for an approved, explicitly scoped exercise
 
-        logger.info(f"[SUMMARY] Attempted: {len(users)}, Dispatched: {dispatched}")
+        logger.info("[SUMMARY] Attempted: %d, Dispatched: %d", len(users), dispatched)
+        record_audit("complete", campaign_id, approval, dispatched, detail=f"attempted={len(users)}")
         logger.info("All messages have been processed.")
     finally:
         global _DRIVER_SINGLETON
@@ -437,5 +441,5 @@ def run_whatsapp_campaign(
 
 
 if __name__ == "__main__":
-    # Example: send campaign with ID 1 to ALL ACTIVE users, keep browser open
-    run_whatsapp_campaign(1, None, keep_open=True)
+    print("Start the desktop application to review a campaign's authorized recipient scope.")
+    print("Direct execution does not dispatch any messages.")

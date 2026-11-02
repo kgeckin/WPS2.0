@@ -30,6 +30,7 @@ from db_utils import (
     log_error
 )
 from sender import run_whatsapp_campaign
+from campaign_approval import ScopeError, approved_batch, record_audit
 
 
 class WPSGUI(tk.Tk):
@@ -816,13 +817,35 @@ class WPSGUI(tk.Tk):
             messagebox.showinfo("Send", "No visible users under current filters.")
             return
 
-        if messagebox.askyesno("Confirm", f"Send campaign #{cid} to all VISIBLE users ({len(target_ids)})?"):
+        # Validate the approved project, time window and every recipient first.
+        # The GUI does not display phone numbers or silently expand user filters.
+        try:
+            approval, approved_users = approved_batch(
+                campaign_id=int(cid),
+                selected_user_ids=target_ids,
+                active_users=fetch_all_users(active_only=True),
+            )
+        except (ScopeError, OSError, ValueError) as exc:
+            messagebox.showerror("Campaign authorization required", str(exc))
+            return
+
+        record_audit("preview", int(cid), approval, len(approved_users))
+        prompt = (
+            f"AUTHORIZATION: {approval.authorization_reference}\n"
+            f"APPROVED BY: {approval.approved_by}\n"
+            f"SELECTED RECIPIENTS: {len(approved_users)}\n"
+            f"APPROVED UNTIL (UTC): {approval.valid_until:%Y-%m-%d %H:%M}\n\n"
+            "This is a real external WhatsApp campaign to the selected approved recipients.\n"
+            "Have you reviewed the message, recipient scope, and institutional approval?"
+        )
+        if messagebox.askyesno("Confirm authorized REAL delivery", prompt):
             threading.Thread(
                 target=run_whatsapp_campaign,
                 kwargs={
-                    "campaign_id": cid,
+                    "campaign_id": int(cid),
                     "target_user_ids": target_ids,
                     "keep_open": self.keep_open_var.get(),
+                    "dry_run": False,
                 },
                 daemon=True,
             ).start()

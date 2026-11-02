@@ -1,0 +1,17 @@
+{
+  "_note": "FICTIONAL DEMONSTRATION ONLY. Copy to .local/campaign-approval.json and enter authorized operational scope. Never commit the local copy.",
+  "campaign_id": 1,
+  "approved_by": "EXAMPLE Information Security Owner",
+  "authorization_reference": "EXAMPLE-CHANGE-001",
+  "valid_from": "2020-01-01T09:00:00+00:00",
+  "valid_until": "2020-01-01T17:00:00+00:00",
+  "recipient_user_ids": [
+    1,
+    2
+  ],
+  "recipient_phone_numbers": [
+    "+12025550111",
+    "+12025550112"
+  ],
+  "max_recipients": 2
+}

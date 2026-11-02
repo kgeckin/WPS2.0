@@ -1,8 +1,10 @@
+> **Authorized awareness project scope:** WPS2.0 was developed to conduct approved organizational security awareness campaigns with **real, in-scope recipients**. The original WhatsApp Web sender, participant/campaign manager and training outcome reporting remain part of the codebase. The in-progress consolidation adds recipient authorization preflight, an operator confirmation and private auditing without reducing the product to a fictional-only application. [Authorized campaign controls](docs/AUTHORIZED_CAMPAIGNS.md). This work is under review and is not yet a verified production deployment.
+
 <div align="center">
 
 <img src="docs/assets/cover.svg" width="100%" alt="WPS 2.0, controlled security awareness lab" />
 
-**A private educational prototype for approved security awareness exercises.**
+**A corporate security awareness simulator designed for documented, authorized real-recipient exercises.**
 
 [Getting started](#getting-started) · [Architecture](docs/ARCHITECTURE.md) · [Security](docs/SECURITY.md)
 
