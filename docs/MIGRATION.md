@@ -8,7 +8,7 @@
 
 | Legacy element | Source | Outcome |
 | --- | --- | --- |
-| Tkinter campaign and participant views | WPS `gui/tabs/`, WPS2 `gui.py` | Replaced by a lightweight read-only desktop view and web dashboard |
+| Tkinter campaign and participant views | WPS `gui/tabs/`, WPS2 `gui.py` | Replaced by a safe Tkinter manager of synthetic campaigns and consent, plus read-only web dashboard |
 | Campaign metadata | WPS `services/db_service.py`, WPS2 `db_utils.py` | Recreated in a minimal synthetic SQLite schema |
 | Encrypted tracking links | WPS `services/crypto_service.py`, WPS2 `encrypt_utils.py` | Replaced by signed 15-minute local practice URLs |
 | Session-bound educational acknowledgement | WPS `services/flask_service.py` | Preserved as one-time CSRF/session bound acknowledgement |
