@@ -92,6 +92,61 @@ def campaigns(path: Path) -> list[dict]:
     return [dict(r) for r in rows]
 
 
+def create_campaign(path: Path, name: str) -> int:
+    """Create a draft scenario. No outbound campaign action is performed."""
+    name = name.strip()
+    if not 3 <= len(name) <= 100 or any(ord(ch) < 32 for ch in name):
+        raise ValueError("Campaign name must contain 3 to 100 printable characters")
+    with database(path) as con:
+        cursor = con.execute(
+            "INSERT INTO campaigns (name, state, created_at) VALUES (?, 'draft', ?)",
+            (name, _now()))
+        return int(cursor.lastrowid)
+
+
+def change_campaign_state(path: Path, campaign_id: int, state: str) -> bool:
+    """Transition a synthetic campaign; closed campaigns cannot issue new links."""
+    if state not in ("draft", "active", "closed"):
+        raise ValueError("Invalid campaign state")
+    with database(path) as con:
+        result = con.execute("UPDATE campaigns SET state=? WHERE id=?", (state, campaign_id))
+        return bool(result.rowcount)
+
+
+def create_alias(path: Path, campaign_id: int, alias: str, consent: bool = False) -> int:
+    """Only fictional TRAIN- codes are accepted, never email or phone contacts."""
+    import re
+
+    alias = alias.strip().upper()
+    if not re.fullmatch(r"TRAIN-[A-Z0-9]{3,8}", alias):
+        raise ValueError("Use a synthetic participant code such as TRAIN-010")
+    with database(path) as con:
+        row = con.execute("SELECT 1 FROM campaigns WHERE id=?", (campaign_id,)).fetchone()
+        if row is None:
+            raise ValueError("Unknown campaign")
+        try:
+            result = con.execute(
+                "INSERT INTO participants (campaign_id, alias, consent) VALUES (?,?,?)",
+                (campaign_id, alias, int(consent)))
+        except sqlite3.IntegrityError as exc:
+            raise ValueError("Synthetic alias already exists in the campaign") from exc
+        return int(result.lastrowid)
+
+
+def set_alias_consent(path: Path, campaign_id: int, alias: str, consent: bool) -> bool:
+    """Revoking demo consent also deletes the alias's historic acknowledgements."""
+    with database(path) as con:
+        row = con.execute(
+            "SELECT id FROM participants WHERE campaign_id=? AND alias=?",
+            (campaign_id, alias.strip().upper())).fetchone()
+        if row is None:
+            return False
+        con.execute("UPDATE participants SET consent=? WHERE id=?", (int(consent), row["id"]))
+        if not consent:
+            con.execute("DELETE FROM events WHERE participant_id=?", (row["id"],))
+        return True
+
+
 def participants(path: Path, campaign_id: int) -> list[dict]:
     with database(path) as con:
         rows = con.execute("SELECT id, alias, consent FROM participants WHERE campaign_id=? ORDER BY id",
