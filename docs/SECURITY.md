@@ -18,7 +18,7 @@ The consolidated WPS app is **local only** and has no real messaging sender. It 
 
 The private signing key is randomly generated on `python main.py init` and written under the ignored `var/` directory. It is not displayed in the console and must not be uploaded. An environment override is supported but must itself be securely generated and at least 40 characters long.
 
-Practice links are signed and expire after 15 minutes. Only explicitly consented demo aliases in active campaigns may use them. A browser acknowledgement uses a session-bound one-time CSRF token. Repeated or forged requests are denied. The GET operation never records a completed exercise.
+Practice links are signed and expire after 15 minutes. Only explicitly consented demo aliases in active campaigns may use them. Campaign creation, lifecycle changes and consent management are available only through the local CLI and Tkinter process. The unauthenticated web API exposes no campaign-changing endpoint. Revoking demo consent deletes related acknowledgement records. A browser acknowledgement uses a session-bound one-time CSRF token. Repeated or forged requests are denied. The GET operation never records a completed exercise.
 
 The dashboard has **no user login** because it is only a single-user local learning lab. That is a production blocker, not a recommendation to expose it to an untrusted network.
 
