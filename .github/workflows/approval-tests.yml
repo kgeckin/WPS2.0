@@ -1,0 +1,29 @@
+name: Approved Campaign Scope Checks
+
+on:
+  push:
+    branches: [refactor/authorized-awareness-consolidation]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  scope-and-syntax:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install test runner
+        run: python -m pip install "pytest>=8,<10"
+      - name: Compile campaign modules
+        run: python -m compileall -q campaign_approval.py sender.py gui.py
+      - name: Offline scope tests
+        run: python -m pytest -q tests/test_campaign_approval.py
