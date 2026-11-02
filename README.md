@@ -19,7 +19,7 @@ This repository is the proposed successor to both [WPS](https://github.com/kgeck
 ## Features
 
 * **Dashboard:** responsive browser interface with calm dark/light themes, local campaign status and acknowledgement activity.
-* **Desktop:** lightweight read-only Tkinter campaign overview, using the same local data as the browser.
+* **Desktop:** lightweight Tkinter desktop campaign editor for fictional codes and local reporting, using the same local data as the browser.
 * **CLI:** initialize, status, issue a short-lived synthetic practice link, anonymized CSV report, desktop and local web server.
 * **Training:** transparent educational page with three security practices and one explicit consented acknowledgement action.
 * **Link integrity:** signed links that expire after 15 minutes, refer only to synthetic identifiers, and work only for consented demo participants in active campaigns.
@@ -49,7 +49,7 @@ python main.py serve
 
 Open **http://127.0.0.1:5000**. The service binds only to loopback. Stop it with Ctrl+C.
 
-On Windows PowerShell, virtual environment activation is `.venv\Scripts\Activate.ps1`. On Linux, it is `source .venv/bin/activate`. The optional desktop window requires Tkinter installed on your local machine and a desktop session.
+On Windows PowerShell, virtual environment activation is `.venv\Scripts\Activate.ps1`. On Linux, it is `source .venv/bin/activate`. The optional desktop management window requires Tkinter installed on your local machine and a desktop session.
 
 **For testing the consolidation before the Pull Request is merged**, check out the feature branch instead of main:
 
@@ -77,6 +77,10 @@ python main.py init
 python main.py status
 python main.py link --campaign 1 --participant 1
 python main.py report > local-report.csv
+python main.py campaign-add --name "Fictional awareness session"
+python main.py campaign-state --campaign 3 --state active
+python main.py alias-add --campaign 3 --alias TRAIN-010
+python main.py alias-consent --campaign 3 --alias TRAIN-010 --grant
 python main.py desktop
 python main.py serve
 ```
@@ -90,7 +94,7 @@ WPS2.0/
 ├── wps_lab/
 │   ├── app.py                # Flask dashboard, local APIs and consented practice
 │   ├── cli.py                # Local command-line workflows
-│   ├── desktop.py            # Read-only Tkinter view
+│   ├── desktop.py            # Local Tkinter management and report export
 │   ├── settings.py           # Private random signing key
 │   ├── storage.py            # SQLite event and campaign model
 │   ├── tokens.py             # Short-lived signed demo links
