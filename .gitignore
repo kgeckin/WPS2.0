@@ -86,3 +86,9 @@ outputs/
 
 # Keep sanitized configuration template
 !.env.example
+
+# Private operator data and local audit records
+.local/
+approval*.json
+!approval.example.json
+campaign-audit.jsonl
