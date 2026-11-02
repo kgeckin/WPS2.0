@@ -1,104 +1,131 @@
 <div align="center">
 
-<img src="docs/assets/cover.svg" width="100%" alt="WPS 2.0, controlled security awareness lab" />
+<img src="docs/assets/cover.svg" width="100%" alt="WPS Awareness Lab, an educational security engineering project" />
 
-**A private educational prototype for approved security awareness exercises.**
+# WPS Awareness Lab
 
-[Getting started](#getting-started) · [Architecture](docs/ARCHITECTURE.md) · [Security](docs/SECURITY.md)
+**One maintained repository for local, consent-based security awareness demonstrations.**
+
+[Quick start](#quick-start) · [Consolidation plan](docs/MIGRATION.md) · [Architecture](docs/ARCHITECTURE.md) · [Security](docs/SECURITY.md)
 
 </div>
 
-## Overview
+## Why this repository exists
 
-WPS 2.0 brings together a Tkinter interface, an educational campaign database,
-a local training awareness website and the original browser integration code.
-This repository is a historical security internship project that is being
-refactored for clarity and safer demonstrations.
+This repository is the proposed successor to both [WPS](https://github.com/kgeckin/WPS) and the former WPS2.0 implementation. The two projects independently implemented the same educational campaign management and awareness workflow. This consolidation preserves their useful concepts while establishing a safer local demonstration built around synthetic data.
 
-The local awareness page shows educational content directly. It does not
-request or store passwords, verification codes or submitted email addresses.
+**WPS Awareness Lab does not impersonate a real login page, ask for credentials, send WhatsApp messages, automate outreach, import customer databases or monitor participants.** It is an explicitly labeled awareness training demonstration. It is not a production security platform.
 
-## What it includes
+## Features
 
-* Campaign and participant management in a desktop interface.
-* Authenticated, time-limited training links.
-* A local Flask awareness website with no credential entry form.
-* Local MySQL event records and privacy-restricted Excel reports.
-* Documentation and regression checks for the key security boundaries.
+* **Dashboard:** responsive browser interface with calm dark/light themes, local campaign status and acknowledgement activity.
+* **Desktop:** lightweight read-only Tkinter campaign overview, using the same local data as the browser.
+* **CLI:** initialize, status, issue a short-lived synthetic practice link, anonymized CSV report, desktop and local web server.
+* **Training:** transparent educational page with three security practices and one explicit consented acknowledgement action.
+* **Link integrity:** signed links that expire after 15 minutes, refer only to synthetic identifiers, and work only for consented demo participants in active campaigns.
+* **Privacy:** no passwords, email addresses, phone numbers, IP addresses, user-agent collection, real recipient lists or outbound delivery.
+* **Security:** locally generated persistent secret, single-use session acknowledgement with CSRF validation, local-only network bind, constrained request sizes, no external JS, and strict response headers.
+* **Persistence:** minimal SQLite schema. CSV export is restricted to campaign, synthetic alias, event type and timestamp. Spreadsheet formula injection is escaped.
+* **Quality:** pytest checks for input constraints, malicious links, CSRF, replay, export filtering, local network access and expected API behavior.
 
-## Getting started
+## Quick start
 
-**Prerequisites:** Python 3.11, a local MySQL development instance and,
-for the original desktop/browser features, Windows and Google Chrome.
+Python 3.11 or newer is recommended. No ChromeDriver, MySQL, Selenium, actual messaging account or external service is required.
 
-```powershell
+```bash
 git clone https://github.com/kgeckin/WPS2.0.git
 cd WPS2.0
-py -3.11 -m venv .venv
-.venv\Scripts\Activate.ps1
+python -m venv .venv
+```
+
+Activate the virtual environment, then:
+
+```bash
 python -m pip install -r requirements.txt
-Copy-Item .env.example .env
-python generate_key.py
+python main.py init
+python main.py status
+python main.py serve
 ```
 
-Configure the local database values in `.env` and initialize the schema
-from [wps_local.sql](wps_local.sql) in an isolated test database.
+Open **http://127.0.0.1:5000**. The service binds only to loopback. Stop it with Ctrl+C.
 
-```powershell
-python main.py
+On Windows PowerShell, virtual environment activation is `.venv\Scripts\Activate.ps1`. On Linux, it is `source .venv/bin/activate`. The optional desktop window requires Tkinter installed on your local machine and a desktop session.
+
+**For testing the consolidation before the Pull Request is merged**, check out the feature branch instead of main:
+
+```bash
+git switch refactor/unified-awareness-lab
 ```
 
-The training web service is bound to `127.0.0.1:5000` by default.
-It is not a public or remotely reachable service. The original browser
-messaging functionality requires separately approved test accounts,
-test recipients and integration verification.
+### Test one simulated acknowledgement
+
+In a second local terminal:
+
+```bash
+python main.py link --campaign 1 --participant 1
+```
+
+Open the printed local practice URL in the same computer's browser. It has a signed fifteen-minute lifetime. Review the educational guidance and click the acknowledgement button. Return to the dashboard and inspect the local event count.
+
+The demo has nine completely fictional participant codes. It does not accept bulk phone or email imports.
+
+### CLI
+
+```bash
+python main.py --help
+python main.py init
+python main.py status
+python main.py link --campaign 1 --participant 1
+python main.py report > local-report.csv
+python main.py desktop
+python main.py serve
+```
+
+CSV reports should remain local. The ignored `var/` directory contains a confidential `secret.key` and a SQLite database. **Never commit the contents of `var/`**.
 
 ## Repository structure
 
 ```text
 WPS2.0/
-├── docs/                 # Architecture, security notes, cover
-├── phishing_server/      # Local credential-free awareness service
-├── tests/                # Isolated privacy and route tests
-├── gui.py                # Desktop UI
-├── db_utils.py           # MySQL access and event tracking
-├── encrypt_utils.py      # Time-limited encrypted links
-├── sender.py             # Legacy browser integration
-├── report_exporter.py    # Minimal-data Excel reports
-├── main.py               # Local application entrypoint
-├── .env.example          # Example, no real credentials
-└── requirements.txt
+├── wps_lab/
+│   ├── app.py                # Flask dashboard, local APIs and consented practice
+│   ├── cli.py                # Local command-line workflows
+│   ├── desktop.py            # Read-only Tkinter view
+│   ├── settings.py           # Private random signing key
+│   ├── storage.py            # SQLite event and campaign model
+│   ├── tokens.py             # Short-lived signed demo links
+│   ├── static/               # Local CSS and JavaScript only
+│   └── templates/            # Transparent learning and dashboard pages
+├── tests/                    # Local, isolated security and workflow tests
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── SECURITY.md
+│   └── MIGRATION.md
+├── var/                      # Ignored, generated locally
+├── main.py
+├── requirements.txt
+└── README.md
 ```
 
-## Validation
+## Tests
 
-```powershell
+```bash
 python -m pip install -r requirements-dev.txt
 python -m pytest -q tests
 ```
 
-The new tests use mock event loggers and database connections. A complete
-Windows, Chrome and MySQL integration test has not yet been confirmed.
+The source code and tests require verification in an environment with Flask installed. Browser and cross-platform integration should be reviewed before the consolidated branch is merged.
 
-## Architecture & decisions
+## Legacy and project history
 
-See [Architecture](docs/ARCHITECTURE.md) for the training flow, service
-boundaries and known integration gaps.
+The earlier WPS and WPS2.0 prototypes used MySQL, Selenium and browser messaging automation. Those code paths and the tracked ChromeDriver binary are being **removed from the new maintained working tree**. Their original repository/commit history remains available separately for authorized archival review.
 
-## Security & limitations
+There is **no automatic migration of real users, historical events, passwords, phone numbers or organizational data** into the consolidated SQLite database. See the [migration plan](docs/MIGRATION.md) before deciding whether to archive the old WPS repository. This preserves the existing source lineage without pretending that legacy deployments have been tested with the new schema.
 
-* Authorized training with informed participants only.
-* No credential capture UI, and no credential collection in the retained API.
-* Links expire and the local web server does not listen on external interfaces.
-* Report export excludes passwords, submitted addresses and diagnostic logs.
-* Historical database rows from older versions are **not** automatically deleted.
-* Third-party content and the tracked browser driver require a rights and
-  binary hygiene review before redistribution.
+## Security and scope
 
-Read [Security & privacy](docs/SECURITY.md) before any demonstration.
-This is an educational prototype, not a verified production deployment.
+This is a local educational demonstration, not an online phishing simulator or service intended for customer networks. Do not expose the local API to the internet or copy old real recipient data into the new project. Read [Security](docs/SECURITY.md).
 
 ## License
 
-No license file is currently present. Do not assume redistribution rights
-for this code, embedded assets or third-party materials.
+No new license has been selected for this consolidation. Original ownership and redistribution rights, including any earlier third-party assets, must be reviewed separately.
