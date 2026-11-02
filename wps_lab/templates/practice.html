@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>WPS | Awareness Practice</title><link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"></head>
+<body class="practice-body"><main class="practice-card">
+  <span class="eyebrow">AUTHORIZED LOCAL DEMONSTRATION</span>
+  <h1>Recognize the signs.<br><em>Protect the account.</em></h1>
+  <p>This is an educational awareness page. No account login, password, verification code or personal information is requested or recorded.</p>
+  <div class="learning-list">
+    <div><span>01</span><p>Verify an unexpected request through a trusted, independent communication channel.</p></div>
+    <div><span>02</span><p>Inspect the destination of links and avoid entering credentials on unverified pages.</p></div>
+    <div><span>03</span><p>Report suspicious activity using an approved organizational procedure.</p></div>
+  </div>
+  <form method="post" action="{{ request.path }}/acknowledge">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <button class="primary" type="submit">I understand these practices ↗</button>
+  </form>
+  <small>Submitting records one synthetic acknowledgement in the local lab. No other data is collected.</small>
+</main></body>
+</html>

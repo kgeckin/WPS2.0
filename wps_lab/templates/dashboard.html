@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<meta name="description" content="An offline-first, local-only security awareness training lab with synthetic sample data.">
+<title>WPS | Awareness Operations Lab</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+<script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+<a href="#main" class="skip">Skip to content</a>
+<div class="shell">
+  <aside class="sidebar" aria-label="Workspace navigation">
+    <a href="/" class="brand"><span class="mark">W<span>.</span></span><span><strong>WPS STUDIO</strong><small>AWARENESS OPERATIONS</small></span></a>
+    <p class="nav-label">WORKSPACE</p>
+    <nav aria-label="Dashboard sections">
+      <a href="#overview" class="nav active"><span class="nav-symbol">◈</span> Overview</a>
+      <a href="#campaigns" class="nav"><span class="nav-symbol">▤</span> Campaigns</a>
+      <a href="#activity" class="nav"><span class="nav-symbol">◷</span> Activity</a>
+      <a href="#framework" class="nav"><span class="nav-symbol">◇</span> Architecture</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="guard"><span class="guard-icon">✓</span><span><strong>Local-only sandbox</strong><small>No real recipients or credentials</small></span></div>
+      <div class="sidebar-foot">WPS / v{{ version }}<span>© EDUCATIONAL DEMO</span></div>
+    </div>
+  </aside>
+
+  <div class="main-column">
+    <header class="topbar">
+      <div class="breadcrumb">WPS STUDIO <span>/</span> OPERATIONS <span>/</span> OVERVIEW</div>
+      <div class="top-actions"><span class="live-indicator"><i></i> LOCAL DEMO</span><button type="button" id="theme-toggle" class="theme-toggle" aria-label="Switch to light color theme">◐ <span>Appearance</span></button><a class="docs" href="/health" target="_blank" rel="noopener">API status ↗</a></div>
+    </header>
+    <main id="main" class="workspace">
+      <section id="overview" class="intro">
+        <div><p class="eyebrow">WORKSPACE / SECURITY AWARENESS</p><h1>Train awareness.<br><em>Measure understanding.</em></h1><p class="intro-body">A safe learning environment for approved exercises. This demo uses synthetic aliases, signed practice links, an acknowledgement step and minimal local reports.</p>
+          <div class="intro-actions"><a class="primary" href="#campaigns">Explore campaigns <span>↗</span></a><a class="secondary" href="/api/v1/report.csv">Export local CSV <span>↓</span></a></div></div>
+        <div class="intro-aside" aria-label="System boundaries">
+          <div class="intro-top"><span>SECURITY POSTURE</span><span>01 / 03</span></div>
+          <svg viewBox="0 0 330 150" role="img" aria-label="Illustration of four connected stages: design, consent, practice, learning">
+          <path d="M34 72H296" stroke="currentColor" stroke-opacity=".25" stroke-width="2" stroke-dasharray="5 7"/>
+          <circle cx="38" cy="72" r="20" fill="#1E394A" stroke="#75DCC8"/><circle cx="118" cy="72" r="20" fill="#1E394A" stroke="#75DCC8"/><circle cx="208" cy="72" r="20" fill="#1E394A" stroke="#E4C68B"/><circle cx="292" cy="72" r="20" fill="#1E394A" stroke="#75DCC8"/>
+          <text x="38" y="78" text-anchor="middle" fill="#EAF4F7" font-size="16">1</text><text x="118" y="78" text-anchor="middle" fill="#EAF4F7" font-size="16">2</text><text x="208" y="78" text-anchor="middle" fill="#EAF4F7" font-size="16">3</text><text x="292" y="78" text-anchor="middle" fill="#EAF4F7" font-size="16">4</text>
+          <g font-size="10" font-weight="700" fill="#B8D0DD" text-anchor="middle"><text x="38" y="117">DESIGN</text><text x="118" y="117">CONSENT</text><text x="208" y="117">PRACTICE</text><text x="292" y="117">LEARN</text></g>
+          </svg>
+          <p>This environment has no external messaging workflow, password form, credential store or recipient discovery.</p>
+        </div>
+      </section>
+
+      <div class="stats" aria-label="Synthetic lab metrics">
+        <article class="stat"><span>CAMPAIGNS</span><strong id="stat-campaigns">{{ summary.campaigns }}</strong><small>Local example scenarios</small></article>
+        <article class="stat"><span>ACTIVE SCENARIOS</span><strong id="stat-active">{{ summary.active }}</strong><small>Training only</small></article>
+        <article class="stat"><span>CONSENTED ALIASES</span><strong id="stat-participants">{{ summary.consented_participants }}</strong><small>Fictional demonstration codes</small></article>
+        <article class="stat"><span>ACKNOWLEDGEMENTS</span><strong id="stat-acknowledgements">{{ summary.acknowledgements }}</strong><small>Explicit practice completions</small></article>
+      </div>
+
+      <div class="main-grid">
+      <section class="panel campaign-panel" id="campaigns">
+        <div class="panel-head"><div><span class="eyebrow">02 / WORKFLOW</span><h2>Campaign overview</h2><p>Simulation state and opt-in training results.</p></div><span class="pill">SYNTHETIC DATA</span></div>
+        <div class="campaign-list" id="campaign-list">
+          {% for campaign in campaigns %}
+          <div class="campaign-row">
+            <div><strong>{{ campaign.name }}</strong><small>{{ campaign.state|upper }} · {{ campaign.consented }} consented demo aliases</small></div>
+            <div class="progress-box"><progress max="{{ campaign.consented if campaign.consented > 0 else 1 }}" value="{{ campaign.acknowledged }}"></progress><small>{{ campaign.acknowledged }} / {{ campaign.consented }} acknowledged</small></div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="panel-note">Generate a one-time local practice URL using <code>python main.py link</code>. Only synthetic participant aliases are enabled.</div>
+      </section>
+
+      <section class="panel framework-panel" id="framework">
+        <div class="panel-head"><div><span class="eyebrow">03 / EXPLAINABILITY</span><h2>Safety design</h2><p>Transparency is part of the workflow.</p></div></div>
+        <div class="principles"><div><span>01</span><div><strong>Explicit consent</strong><p>Practice records use approved synthetic aliases.</p></div></div><div><span>02</span><div><strong>Credential-free</strong><p>No password field, submitted address or OTP collection.</p></div></div><div><span>03</span><div><strong>Private operation</strong><p>Server binds to loopback with signed, expiring links.</p></div></div><div><span>04</span><div><strong>Minimal retention</strong><p>Only acknowledgement events are stored locally.</p></div></div></div>
+      </section>
+      </div>
+
+      <section class="panel activity-panel" id="activity">
+        <div class="panel-head"><div><span class="eyebrow">04 / AUDITABLE LEARNING</span><h2>Recent acknowledgements</h2><p>Only fictional codes and event timestamps, no personal identifiers.</p></div><button type="button" id="refresh" class="refresh">Refresh status ↻</button></div>
+        <div class="table-scroll"><table><thead><tr><th>CAMPAIGN</th><th>ALIAS</th><th>EVENT</th><th>UTC TIMESTAMP</th></tr></thead><tbody id="activity-rows">
+          {% for event in events %}<tr><td>{{ event.campaign }}</td><td>{{ event.alias }}</td><td><span class="event-ok">{{ event.kind }}</span></td><td>{{ event.created_at }}</td></tr>{% else %}<tr><td colspan="4" class="empty">No training acknowledgements yet. Generate a local practice link to try the flow.</td></tr>{% endfor %}
+        </tbody></table></div>
+        <p class="last-refresh" id="updated" aria-live="polite">Local data. Refreshes automatically while this page is open.</p>
+      </section>
+      <footer class="footer">WPS AWARENESS STUDIO <span>FICTIONAL DEMO · LOCAL MACHINE · NO REMOTE SENDING</span></footer>
+    </main>
+  </div>
+</div>
+</body>
+</html>
