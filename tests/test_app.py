@@ -9,7 +9,7 @@ def test_dashboard_and_apis_only_expose_synthetic_data(client):
     page = client.get("/")
     assert page.status_code == 200
     assert b"TRAINING" in page.data or b"Training" in page.data
-    assert b"password" not in page.data.lower() or b"no password" in page.data.lower()
+    assert b'type="password"' not in page.data.lower()
     summary = client.get("/api/v1/summary").json
     assert summary["campaigns"] == 2
     assert summary["credential_collection"] is False
